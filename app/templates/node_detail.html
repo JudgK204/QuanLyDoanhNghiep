@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Node: {{ node.Name }}</h2>
+
+<div>
+  Breadcrumb:
+  {% for b in breadcrumb %}
+    <a href="#" onclick="loadFolder({{ b.id }});return false;">{{ b.name }}</a>
+    {% if not loop.last %} / {% endif %}
+  {% endfor %}
+</div>
+
+<h3>Children</h3>
+<ul>
+  {% for c in node.children %}
+    <li><a href="#" onclick="loadFolder({{ c.ID }});return false;">{{ c.Name }}</a></li>
+  {% endfor %}
+</ul>
+
+<h3>Files</h3>
+<ul>
+  {% for f in node.files %}
+    <li><a href="{{ url_for('main.serve_media', filename=(str(f.NodeID) + '/' + f.FileName)) }}" target="_blank">{{ f.FileName }}</a></li>
+  {% endfor %}
+</ul>
+
+{% endblock %}

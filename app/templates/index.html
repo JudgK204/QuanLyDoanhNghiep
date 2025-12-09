@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Sơ đồ hệ thống (Column Tree)</h1>
+
+<div id="breadcrumb" class="breadcrumb">Home</div>
+<button id="btnBack" class="btn" style="display:none;">← Back</button>
+
+<div id="tree-root-wrapper" class="tree-wrapper"></div>
+
+<div id="fileList" class="file-list"></div>
+
+<button id="btnUpload" class="upload-fab" title="Upload">☁</button>
+
+<!-- modal upload -->
+<div id="uploadModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Upload file</h3>
+    <form id="uploadForm" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="node" id="upload_node_id">
+      <input type="file" name="file" required>
+      <div style="margin-top:10px;">
+        <button type="button" id="btnCancelUpload">Cancel</button>
+        <button type="submit">Upload</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

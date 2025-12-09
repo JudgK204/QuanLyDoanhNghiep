@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="text-2xl font-bold mb-4">Sơ đồ hệ thống (Tree View)</h2>
+
+<div id="tree-container" class="p-4 border rounded bg-white shadow" style="width: 450px;">
+    <ul id="tree-root" class="tree"></ul>
+</div>
+
+<script src="{{ url_for('static', filename='js/folder_tree.js') }}"></script>
+
+<style>
+    ul.tree { padding-left: 20px; list-style-type: none; }
+    .tree-node {
+        cursor: pointer;
+        padding: 4px 0;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .folder { font-weight: bold; }
+    .caret::before {
+        content: "▶";
+        display: inline-block;
+        margin-right: 6px;
+        transition: transform .15s;
+        font-size: 12px;
+    }
+    .caret-down::before {
+        transform: rotate(90deg);
+    }
+    .nested { display: none; }
+    .active { display: block; }
+</style>
+
+{% endblock %}

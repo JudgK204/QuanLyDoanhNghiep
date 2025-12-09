@@ -1,0 +1,12 @@
+body { font-family: Arial, sans-serif; margin: 20px; color:#222; }
+.tree-wrapper { display:flex; overflow-x:auto; gap:12px; padding:8px 0; }
+.tree-column { min-width:240px; background:#fff; border:1px solid #ddd; padding:8px; border-radius:6px; }
+.tree-item { padding:8px; border-radius:4px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; }
+.tree-item:hover { background:#f5f7fa; }
+.upload-fab { position: fixed; right: 24px; bottom: 24px; padding:12px; border-radius:50%; background:#2b7cff; color:white; border:none; font-size:20px; cursor:pointer; }
+.hidden { display:none; }
+.modal { position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; }
+.modal-content { background:white; padding:16px; border-radius:8px; width:360px; }
+.breadcrumb { margin-bottom:8px; }
+.file-list { margin-top:16px; }
+.btn { padding:6px 10px; border:1px solid #ccc; background:#eee; cursor:pointer; }
