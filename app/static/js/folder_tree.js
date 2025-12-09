@@ -71,19 +71,30 @@ function loadChildren(parentId, container) {
 
 // Toggle node
 function toggleNode(nodeId, liElement, spanElement) {
-    const existing = liElement.querySelector(":scope > ul");
+    let childUl = liElement.querySelector(":scope > ul");
 
-    if (existing) {
-        existing.classList.toggle("active");
-        spanElement.classList.toggle("caret-down");
+    // Nếu đã load con -> chỉ đóng/mở
+    if (childUl) {
+        const isOpen = childUl.style.display !== "none";
+
+        if (isOpen) {
+            childUl.style.display = "none";
+            spanElement.classList.remove("caret-down");
+        } else {
+            childUl.style.display = "block";
+            spanElement.classList.add("caret-down");
+        }
         return;
     }
 
+    // Nếu chưa load con -> fetch
     fetchJson(`/api/folder/children/${nodeId}`)
         .then(data => {
             const children = data.children || [];
             const ul = document.createElement("ul");
-            ul.classList.add("active");
+
+            // Mặc định hiển thị khi load lần đầu
+            ul.style.display = "block";
 
             children.forEach(item => {
                 const li = document.createElement("li");
@@ -116,10 +127,11 @@ function toggleNode(nodeId, liElement, spanElement) {
                 ul.appendChild(li);
             });
 
-            spanElement.classList.add("caret-down");
             liElement.appendChild(ul);
+            spanElement.classList.add("caret-down");
         });
 }
+
 
 // Mở modal tạo thư mục
 function openCreateModal(parentId, level) {
