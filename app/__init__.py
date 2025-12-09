@@ -13,6 +13,10 @@ def create_app():
 
     # Đăng ký blueprint
     from app.views import bp
+    from app.routers.folder_router import folder_router
+
     app.register_blueprint(bp)
+    app.register_blueprint(folder_router, url_prefix="/api/folder")
+
 
     return app

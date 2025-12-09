@@ -84,6 +84,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 itemDiv.className = 'tree-item';
                 const left = document.createElement('div');
                 left.innerHTML = `${item.Level && item.Level > 0 ? '📁' : '📄'} <span style="margin-left:8px">${escapeHtml(item.Name)}</span>`;
+                const addBtn = document.createElement('button');
+                addBtn.type = 'button';
+                addBtn.textContent = '+';
+                addBtn.className = 'add-btn';
+                addBtn.style.marginRight = '10px';
+                addBtn.onclick = (ev) => {
+                    ev.stopPropagation();
+                    openCreateModal(item.id, item.Level);
+                };
+                left.prepend(addBtn);
                 itemDiv.appendChild(left);
 
                 const right = document.createElement('div');
@@ -208,3 +218,68 @@ document.addEventListener('DOMContentLoaded', () => {
     // make loadFolder global so template links can call it
     window.loadFolder = loadFolder;
 });
+
+// =============================
+//  CREATE FOLDER (Thêm Quận/Phường)
+// =============================
+
+const createFolderModal = document.getElementById('createFolderModal');
+const txtNewFolder = document.getElementById('newFolderName');
+const txtNewDesc = document.getElementById('newFolderDesc');
+const inputParent = document.getElementById('create_parent_id');
+const inputLevel = document.getElementById('create_level');
+const btnCreateFolder = document.getElementById('btnCreateFolder');
+const btnCancelCreate = document.getElementById('btnCancelCreate');
+
+function openCreateModal(parentId, level){
+    inputParent.value = parentId;
+    inputLevel.value = level + 1;
+    txtNewFolder.value = "";
+    txtNewDesc.value = "";
+    createFolderModal.classList.remove("hidden");
+}
+
+function closeCreateModal(){
+    createFolderModal.classList.add("hidden");
+}
+
+if (btnCancelCreate) {
+    btnCancelCreate.onclick = closeCreateModal;
+}
+
+btnCreateFolder.onclick = async () => {
+    const name = txtNewFolder.value.trim();
+    if (!name) {
+        alert("Tên thư mục không được để trống");
+        return;
+    }
+
+    const body = {
+        parent_id: Number(inputParent.value),
+        name: name,
+        description: txtNewDesc.value.trim(),
+        level: Number(inputLevel.value)
+    };
+
+
+    const res = await fetch("/api/folder/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+
+    const j = await res.json();
+
+    if (!res.ok) {
+        alert(j.error || JSON.stringify(j));
+        return;
+    }
+
+    alert("Tạo thư mục thành công");
+
+    closeCreateModal();
+
+    // Reload cột hiện tại để thấy folder mới
+    fetchColumn(body.ParentID);
+};
+

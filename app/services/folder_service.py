@@ -6,19 +6,35 @@ from app.models.files import Files
 # ============================
 # 1. Tạo folder mới
 # ============================
-def create_folder(parent_id, name, description=None):
+from app.config.database import SessionLocal
+from app.models import FolderTree, Files
+
+def create_folder(parent_id, name, description=None, level=None):
     db = SessionLocal()
     try:
+        # Auto-level nếu không truyền
+        if level is None:
+            if parent_id:
+                parent = db.query(FolderTree).filter(FolderTree.ID == parent_id).first()
+                level = (parent.Level + 1) if parent else 1
+            else:
+                level = 1
+
         folder = FolderTree(
             ParentID=parent_id,
             Name=name,
             Description=description,
-            Level=1,
+            Level=level
         )
         db.add(folder)
         db.commit()
         db.refresh(folder)
         return folder
+
+    except Exception as e:
+        db.rollback()
+        raise e
+
     finally:
         db.close()
 

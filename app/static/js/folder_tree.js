@@ -3,50 +3,73 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!root) return;
 
     loadChildren(1, root);
+
+    const btn = document.getElementById("btnCreateFolder");
+    if (btn) btn.addEventListener("click", submitCreateFolder);
+
+    const cancelBtn = document.getElementById("btnCancelCreate");
+    if (cancelBtn) cancelBtn.onclick = closeCreateModal;
 });
 
-function fetchJson(url) {
-    return fetch(url).then(r => {
+// Hàm fetch JSON
+function fetchJson(url, options) {
+    return fetch(url, options).then(r => {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
     });
 }
 
+// Load thư mục con
 function loadChildren(parentId, container) {
     fetchJson(`/api/folder/children/${parentId}`)
         .then(data => {
             const children = Array.isArray(data.children) ? data.children : [];
-
             container.innerHTML = "";
-
-            if (children.length === 0) {
-                container.innerHTML = "<div class='no-child'>Không có thư mục con</div>";
-                return;
-            }
 
             const ul = document.createElement("ul");
             ul.classList.add("tree-root");
 
             children.forEach(item => {
                 const li = document.createElement("li");
-                const span = document.createElement("span");
+                li.setAttribute("data-id", item.ID);
 
+                const span = document.createElement("span");
                 span.textContent = item.Name;
                 span.classList.add("tree-node", "caret");
-
                 span.onclick = () => toggleNode(item.ID, li, span);
 
+                // Nút thêm
+                const addBtn = document.createElement("button");
+                addBtn.textContent = "+";
+                addBtn.classList.add("add-btn");
+                addBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openCreateModal(item.ID, item.Level);
+                };
+
+                // Nút xóa
+                const delBtn = document.createElement("button");
+                delBtn.textContent = "-";
+                delBtn.classList.add("delete-btn");
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteFolder(item.ID, item.Name);
+                };
+
                 li.appendChild(span);
+                li.appendChild(addBtn);
+                li.appendChild(delBtn);
                 ul.appendChild(li);
             });
 
             container.appendChild(ul);
         })
         .catch(err => {
-            container.innerHTML = `<div class='error'>Lỗi tải: ${err.message}</div>`;
+            container.innerHTML = `<div class='error'>Lỗi: ${err.message}</div>`;
         });
 }
 
+// Toggle node
 function toggleNode(nodeId, liElement, spanElement) {
     const existing = liElement.querySelector(":scope > ul");
 
@@ -58,39 +81,111 @@ function toggleNode(nodeId, liElement, spanElement) {
 
     fetchJson(`/api/folder/children/${nodeId}`)
         .then(data => {
-            const children = Array.isArray(data.children) ? data.children : [];
-
+            const children = data.children || [];
             const ul = document.createElement("ul");
-
-            if (children.length === 0) {
-                const note = document.createElement("div");
-                note.classList.add("no-child");
-                note.textContent = "(Không có mục con)";
-                liElement.appendChild(note);
-                return;
-            }
+            ul.classList.add("active");
 
             children.forEach(item => {
                 const li = document.createElement("li");
-                const span = document.createElement("span");
+                li.setAttribute("data-id", item.ID);
 
+                const span = document.createElement("span");
                 span.textContent = item.Name;
                 span.classList.add("tree-node", "caret");
-
                 span.onclick = () => toggleNode(item.ID, li, span);
 
+                const addBtn = document.createElement("button");
+                addBtn.textContent = "+";
+                addBtn.classList.add("add-btn");
+                addBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openCreateModal(item.ID, item.Level);
+                };
+
+                const delBtn = document.createElement("button");
+                delBtn.textContent = "-";
+                delBtn.classList.add("delete-btn");
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteFolder(item.ID, item.Name);
+                };
+
                 li.appendChild(span);
+                li.appendChild(addBtn);
+                li.appendChild(delBtn);
                 ul.appendChild(li);
             });
 
-            ul.classList.add("active");
             spanElement.classList.add("caret-down");
             liElement.appendChild(ul);
-        })
-        .catch(err => {
-            const note = document.createElement("div");
-            note.classList.add("error");
-            note.textContent = `Lỗi tải: ${err.message}`;
-            liElement.appendChild(note);
         });
+}
+
+// Mở modal tạo thư mục
+function openCreateModal(parentId, level) {
+    const modal = document.getElementById("createFolderModal");
+    if (!modal) {
+        alert("Không tìm thấy modal tạo thư mục!");
+        return;
+    }
+
+    document.getElementById("create_parent_id").value = parentId;
+    document.getElementById("create_level").value = level;
+
+    modal.classList.remove("hidden");
+}
+
+// Đóng modal
+function closeCreateModal() {
+    document.getElementById("createFolderModal").classList.add("hidden");
+}
+
+// Submit tạo thư mục – KHÔNG reload trang
+function submitCreateFolder() {
+    const parentId = Number(document.getElementById("create_parent_id").value);
+    const level = Number(document.getElementById("create_level").value);
+    const name = document.getElementById("newFolderName").value;
+    const desc = document.getElementById("newFolderDesc").value;
+
+    if (!name) return alert("Tên thư mục không được trống");
+
+    fetchJson("/api/folder/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            parent_id: parentId,
+            name: name,
+            description: desc,
+            level: level
+        })
+    })
+        .then(() => {
+            closeCreateModal();
+
+            // Reload chính xác node cha (không ảnh hưởng các node khác)
+            const parentLi = document.querySelector(`li[data-id='${parentId}']`);
+            if (parentLi) {
+                const childUl = parentLi.querySelector("ul");
+                if (childUl) {
+                    loadChildren(parentId, parentLi);
+                }
+            }
+
+            alert("Tạo thư mục thành công!");
+        })
+        .catch(err => alert("Lỗi: " + err.message));
+}
+
+// Xóa thư mục
+function deleteFolder(id, name) {
+    if (!confirm(`Bạn có chắc muốn xóa thư mục "${name}"?\nToàn bộ thư mục con sẽ bị xóa.`)) return;
+
+    fetchJson(`/api/folder/delete/${id}`, { method: "DELETE" })
+        .then(() => {
+            const li = document.querySelector(`li[data-id='${id}']`);
+            if (li && li.parentNode) li.parentNode.removeChild(li);
+
+            alert("Đã xóa thư mục!");
+        })
+        .catch(err => alert("Lỗi: " + err.message));
 }
